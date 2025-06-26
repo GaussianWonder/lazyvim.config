@@ -18,4 +18,10 @@ return {
       colorscheme = "gruvbox-material",
     },
   },
+  {
+    "snacks.nvim",
+    opts = {
+      scroll = { enabled = not vim.g.neovide },
+    },
+  },
 }
