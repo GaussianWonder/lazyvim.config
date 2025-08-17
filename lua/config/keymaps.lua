@@ -27,3 +27,21 @@ map("v", "<C-A-Down>", "<C-d>zz", { desc = "Half Page Down (Centered)" })
 -- Move selected lines up/down in visual mode with Alt+arrows
 map("v", "<A-Up>", ":m '<-2<CR>gv=gv", { desc = "Move Selection Up" })
 map("v", "<A-Down>", ":m '>+1<CR>gv=gv", { desc = "Move Selection Down" })
+
+local function smart_home()
+  local col = vim.fn.col(".")
+  local first_nonblank = vim.fn.match(vim.fn.getline("."), "\\S") + 1
+
+  if first_nonblank == 0 then
+    -- Line is empty or only whitespace
+    vim.cmd("normal! 0")
+  elseif col == first_nonblank then
+    -- Already at first non-blank, go to beginning of line
+    vim.cmd("normal! 0")
+  else
+    -- Go to first non-blank character
+    vim.cmd("normal! ^")
+  end
+end
+
+vim.keymap.set({ "n", "v", "i" }, "<Home>", smart_home, { desc = "Smart Home (first char/beginning)" })
