@@ -24,4 +24,10 @@ return {
       scroll = { enabled = not vim.g.neovide },
     },
   },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      inlay_hints = { enabled = true },
+    },
+  },
 }
