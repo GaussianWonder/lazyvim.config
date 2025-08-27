@@ -20,14 +20,22 @@ return {
   },
   {
     "snacks.nvim",
-    opts = {
-      scroll = { enabled = not vim.g.neovide },
-    },
+    opts = function(_, opts)
+      if not opts.scroll then
+        opts.scroll = {}
+      end
+
+      opts.scroll.enabled = not vim.g.neovide
+    end,
   },
   {
     "neovim/nvim-lspconfig",
-    opts = {
-      inlay_hints = { enabled = true },
-    },
+    opts = function(_, opts)
+      if not opts.inlay_hints then
+        opts.inlay_hints = {}
+      end
+
+      opts.inlay_hints.enabled = true
+    end,
   },
 }
