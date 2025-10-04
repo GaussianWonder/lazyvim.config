@@ -38,4 +38,28 @@ return {
       opts.inlay_hints.enabled = true
     end,
   },
+  {
+    "ibhagwan/smartyank.nvim",
+    opts = {
+      highlight = {
+        enabled = true, -- highlight yanked text
+        higroup = "IncSearch", -- highlight group
+        timeout = 2000, -- timeout for highlight
+      },
+      clipboard = {
+        enabled = true, -- enables OSC 52 clipboard integration
+      },
+      tmux = {
+        enabled = true, -- enable tmux clipboard integration
+        -- remove `-w` to disable copy to host client's clipboard
+        cmd = { "tmux", "set-buffer", "-w" },
+      },
+      osc52 = {
+        enabled = true, -- enable OSC 52 integration
+        ssh_only = true, -- only use OSC 52 when SSH session detected
+        silent = false, -- suppress notifications
+        echo_hl = "Directory", -- highlight group for echo message
+      },
+    },
+  },
 }
