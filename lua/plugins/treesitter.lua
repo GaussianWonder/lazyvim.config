@@ -17,7 +17,7 @@ return {
       "regex",
       "tsx",
       "typescript",
-      "vim",
+      -- "vim",
       "yaml",
       "tsx",
     })
