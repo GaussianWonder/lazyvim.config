@@ -6,7 +6,11 @@ return {
     },
     config = function()
       -- The plugin will use sensible defaults unless this is defined
-      require("claudecode").setup({})
+      require("claudecode").setup({
+        -- uses native claude
+        terminal_cmd = "~/.local/bin/claude",
+        git_repo_cwd = true,
+      })
     end,
     keys = {
       { "<leader>a", desc = "+AI" },
