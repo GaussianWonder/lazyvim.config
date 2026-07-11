@@ -1,4 +1,6 @@
 if vim.g.neovide then
+  vim.o.guifont = "FiraCode Nerd Font:h11"
+
   vim.g.neovide_refresh_rate_idle = 5
   vim.g.neovide_scale_factor = 1.0
 
@@ -13,6 +15,9 @@ if vim.g.neovide then
   vim.g.neovide_scroll_animation_length = 0.05
   vim.g.neovide_scroll_animation_far_lines = 10
   vim.g.neovide_position_animation_length = 0.05
+
+  -- vim.keymap.set({ "n", "v" }, "<C-+>", ":lua vim.g.neovide_scale_factor = vim.g.neovide_scale_factor + 0.1<CR>")
+  -- vim.keymap.set({ "n", "v" }, "<C-->", ":lua vim.g.neovide_scale_factor = vim.g.neovide_scale_factor - 0.1<CR>")
 end
 
 vim.g.snacks_animate = false
