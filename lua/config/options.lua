@@ -1,3 +1,8 @@
+vim.o.shell = "pwsh.exe"
+vim.o.shellcmdflag = "-NoLogo -ExecutionPolicy RemoteSigned -Command"
+vim.o.shellquote = ""
+vim.o.shellxquote = ""
+
 if vim.g.neovide then
   vim.o.guifont = "FiraCode Nerd Font:h11"
 
