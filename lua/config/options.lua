@@ -1,7 +1,11 @@
-vim.o.shell = "pwsh.exe"
-vim.o.shellcmdflag = "-NoLogo -ExecutionPolicy RemoteSigned -Command"
-vim.o.shellquote = ""
-vim.o.shellxquote = ""
+if vim.fn.has("win32") == 1 then
+  vim.o.shell = "pwsh.exe"
+  vim.o.shellcmdflag = "-NoLogo -ExecutionPolicy RemoteSigned -Command"
+  vim.o.shellquote = ""
+  vim.o.shellxquote = ""
+  vim.o.shellredir = "-RedirectStandardOutput %s -NewWindow -Wait"
+  vim.o.shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode"
+end
 
 if vim.g.neovide then
   vim.o.guifont = "FiraCode Nerd Font:h11"
