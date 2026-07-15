@@ -116,4 +116,5 @@ return {
       opts.inlay_hints.enabled = true
     end,
   },
+  { "akinsho/git-conflict.nvim", config = true },
 }
