@@ -8,8 +8,7 @@ if vim.fn.has("win32") == 1 then
 end
 
 if vim.g.neovide then
-  vim.o.guifont = "FiraCode Nerd Font:h11"
-
+  vim.o.guifont = "FiraCode Nerd Font:h12"
   vim.g.neovide_refresh_rate_idle = 5
   vim.g.neovide_scale_factor = 1.0
 
