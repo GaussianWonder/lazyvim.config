@@ -1,6 +1,5 @@
 return {
   "kndndrj/nvim-dbee",
-  commit = "dda517694889a5d238d7aa407403984da9f80cc0",
   dependencies = {
     "MunifTanjim/nui.nvim",
   },
