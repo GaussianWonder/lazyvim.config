@@ -24,11 +24,11 @@ return {
       for k, v in pairs({ o = "ours", t = "theirs", b = "base", a = "all" }) do
         vim.list_extend(hunk, {
           { "n", "<leader>c" .. k, false },
-          { "n", "<leader>gc" .. k, a.conflict_choose(v), { desc = "Choose " .. v } },
+          { "n", "<leader>gc" .. k, a.conflict_choose(v), { desc = "Choose " .. v .. " (hunk)" } },
         })
         vim.list_extend(file, {
           { "n", "<leader>c" .. k:upper(), false },
-          { "n", "<leader>gc" .. k:upper(), a.conflict_choose_all(v), { desc = "Choose " .. v .. " (file)" } },
+          { "n", "<leader>gc" .. k:upper(), a.conflict_choose_all(v), { desc = "Choose " .. v .. " (all)" } },
         })
       end
 
