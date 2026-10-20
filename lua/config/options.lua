@@ -1,5 +1,30 @@
 if vim.fn.has("win32") == 1 then
-  vim.o.shell = "pwsh.exe"
+  -- Store-installed pwsh is an app execution alias that nvim can't execute, so resolve the real
+  -- (versioned) exe from the package and cache it; re-resolve only when the cached path goes stale
+  local function find_pwsh()
+    if vim.fn.executable("pwsh.exe") == 1 then
+      return "pwsh.exe"
+    end
+    local cache = vim.fn.stdpath("data") .. "/pwsh_path"
+    local ok, lines = pcall(vim.fn.readfile, cache)
+    if ok and lines[1] and vim.fn.executable(lines[1]) == 1 then
+      return lines[1]
+    end
+    local dir = vim.fn.system({
+      "powershell.exe",
+      "-NoProfile",
+      "-Command",
+      "(Get-AppxPackage Microsoft.PowerShell).InstallLocation",
+    })
+    local exe = vim.trim(dir) .. "\\pwsh.exe"
+    if vim.v.shell_error == 0 and vim.fn.executable(exe) == 1 then
+      pcall(vim.fn.writefile, { exe }, cache)
+      return exe
+    end
+    return "powershell.exe"
+  end
+  -- quoted because the WindowsApps path contains a space
+  vim.o.shell = '"' .. find_pwsh() .. '"'
   vim.o.shellcmdflag = "-NoLogo -ExecutionPolicy RemoteSigned -Command"
   vim.o.shellquote = ""
   vim.o.shellxquote = ""
