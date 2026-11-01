@@ -7,6 +7,17 @@ if vim.fn.has("win32") == 1 then
   vim.o.shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode"
 end
 
+-- WSL: default provider picks xclip (via WSLg X server), which takes ~3s per call.
+-- Prefer wl-clipboard (WSLg wayland), fall back to win32yank.
+if vim.fn.has("wsl") == 1 and vim.fn.executable("wl-copy") == 0 and vim.fn.executable("win32yank.exe") == 1 then
+  vim.g.clipboard = {
+    name = "win32yank-wsl",
+    copy = { ["+"] = { "win32yank.exe", "-i", "--crlf" }, ["*"] = { "win32yank.exe", "-i", "--crlf" } },
+    paste = { ["+"] = { "win32yank.exe", "-o", "--lf" }, ["*"] = { "win32yank.exe", "-o", "--lf" } },
+    cache_enabled = 0,
+  }
+end
+
 if vim.g.neovide then
   vim.o.guifont = "FiraCode Nerd Font:h12"
   vim.g.neovide_refresh_rate_idle = 5
