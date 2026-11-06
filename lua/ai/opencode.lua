@@ -1,3 +1,6 @@
+--- OpenCode backend (nickjvandyke/opencode.nvim) for the unified AI dispatcher in `ai/init.lua`.
+local util = require("ai.util")
+
 --- Resolve the opencode binary: PATH first, then the official installer location.
 local function opencode_bin()
   local on_path = vim.fn.exepath("opencode")
@@ -9,7 +12,9 @@ local function opencode_bin()
   return vim.fn.executable(installer) == 1 and installer or "opencode"
 end
 
-local M = {}
+local M = { name = "opencode", label = "OpenCode" }
+
+M.bin = opencode_bin
 
 ---@type snacks.win?
 M.term = nil
@@ -175,7 +180,7 @@ end
 --- Prefill Ask with the files selected in the snacks explorer (or any picker).
 ---@param picker? snacks.Picker
 function M.send_picker(picker)
-  picker = picker or Snacks.picker.get({ source = "explorer" })[1]
+  picker = picker or util.explorer()
   if not picker then
     Snacks.notify.warn("No explorer/picker open", { title = "opencode" })
     return
@@ -194,7 +199,7 @@ end
 --- async (opening the TUI), so leave visual mode now and restore it with `gv` right before the call.
 ---@param method "ask" | "prompt" | "select"
 ---@param arg? string
-local function oc(method, arg)
+function M.call(method, arg)
   return function()
     local visual = vim.fn.mode():match("[vV\22]") ~= nil
     local win = vim.api.nvim_get_current_win()
@@ -211,119 +216,35 @@ local function oc(method, arg)
   end
 end
 
-return {
-  {
-    "nickjvandyke/opencode.nvim",
-    -- main branch targets OpenCode v2 (installed: v2.2.x)
-    dependencies = { "folke/snacks.nvim" },
-    init = function()
-      ---@type opencode.Opts
-      vim.g.opencode_opts = {
-        server = {
-          -- Called when no running OpenCode service is found: open the TUI on the right without stealing focus.
-          start = function()
-            M.open({ enter = false, continue = true })
-          end,
-        },
-      }
-    end,
-    config = function()
-      -- Reveal the terminal when OpenCode starts working (e.g. after a prompt sent from a buffer)
-      vim.api.nvim_create_autocmd("User", {
-        group = vim.api.nvim_create_augroup("opencode_terminal", { clear = true }),
-        pattern = "OpencodeEvent:session.execution.started",
-        callback = function()
-          if term_valid() and not M.term:valid() then
-            M.term:show()
-          end
-        end,
-      })
-    end,
-    keys = {
-      { "<leader>o", desc = "+OpenCode", mode = { "n", "x" } },
-      -- Core
-      { "<leader>oc", M.toggle, desc = "Toggle OpenCode" },
-      { "<leader>of", M.focus, desc = "Focus OpenCode" },
-      { "<leader>oC", M.continue, desc = "Continue OpenCode" },
-      { "<leader>ox", M.close, desc = "Close OpenCode" },
 
-      -- Context (opens Ask prefilled with the context; type a question and <CR>)
-      { "<leader>ob", oc("ask", "@buffer "), desc = "Add Current Buffer" },
-      {
-        "<leader>ot",
-        function()
-          M.send_picker()
-        end,
-        desc = "Add File from Tree",
-      },
-      { "<leader>os", oc("ask", "@this: "), desc = "Send Selection to OpenCode", mode = "x" },
-      { "<leader>oa", oc("ask", "@this: "), desc = "Ask OpenCode", mode = { "n", "x" } },
-      { "<leader>od", oc("prompt", "Fix @diagnostics"), desc = "Fix Diagnostics" },
+---@return integer?
+function M.buf()
+  return term_valid() and M.term.buf or nil
+end
 
-      -- Prompts / commands picker (explain, review, test, ...)
-      { "<leader>op", oc("select"), desc = "Select Prompt/Action", mode = { "n", "x" } },
+---@return integer?
+function M.win()
+  return util.buf_win(M.buf())
+end
 
-      -- Operator: go{motion} sends range, goo sends line (dot-repeatable).
-      -- Needs the TUI already open (operators must return keys synchronously).
-      {
-        "go",
-        function()
-          return require("opencode").operator("@this ")
-        end,
-        desc = "Send Range to OpenCode",
-        expr = true,
-        mode = { "n", "x" },
-      },
-      {
-        "goo",
-        function()
-          return require("opencode").operator("@this ") .. "_"
-        end,
-        desc = "Send Line to OpenCode",
-        expr = true,
-      },
-    },
-  },
-  {
-    -- <a-o> in any snacks picker / explorer: send selected files to OpenCode Ask
-    "folke/snacks.nvim",
-    opts = {
-      picker = {
-        actions = {
-          opencode_send = function(picker)
-            M.send_picker(picker)
-          end,
-        },
-        win = {
-          input = { keys = { ["<a-o>"] = { "opencode_send", mode = { "n", "i" } } } },
-          list = { keys = { ["<a-o>"] = { "opencode_send", mode = { "n" } } } },
-        },
-      },
-    },
-  },
-  {
-    -- OpenCode connection/status icon in the statusline (only once the plugin is loaded)
-    "nvim-lualine/lualine.nvim",
-    optional = true,
-    opts = function(_, opts)
-      table.insert(opts.sections.lualine_x, 1, {
-        function()
-          return require("opencode").statusline()
-        end,
-        cond = function()
-          return package.loaded["opencode"] ~= nil
-        end,
-      })
-    end,
-  },
-  {
-    "folke/which-key.nvim",
-    opts = function(_, opts)
-      opts.icons = opts.icons or {}
-      opts.icons.rules = opts.icons.rules or {}
-      vim.list_extend(opts.icons.rules, {
-        { pattern = "opencode", icon = "󰚩", color = "green" },
-      })
-    end,
-  },
-}
+function M.hide()
+  if M.win() then
+    M.term:hide()
+  end
+end
+
+M.add_buffer = M.call("ask", "@buffer ")
+M.send_selection = M.call("ask", "@this: ")
+M.ask = M.call("ask", "@this: ")
+M.select = M.call("select")
+M.fix_diagnostics = M.call("prompt", "Fix @diagnostics")
+
+function M.add_tree()
+  M.send_picker()
+end
+
+function M.resume()
+  M.continue()
+end
+
+return M

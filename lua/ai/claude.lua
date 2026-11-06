@@ -1,3 +1,6 @@
+--- Claude Code backend (coder/claudecode.nvim) for the unified AI dispatcher in `ai/init.lua`.
+local util = require("ai.util")
+
 --- Locate the claude binary. Returns an absolute path or nil (plugin then falls back to "claude").
 --- Order: PATH, native installer, well-known static dirs, then dirs reported by package managers.
 local function find_claude()
@@ -108,50 +111,61 @@ local function find_claude()
   end
 end
 
-return {
-  {
-    "coder/claudecode.nvim",
-    dependencies = {
-      "folke/snacks.nvim",
-    },
-    config = function()
-      local claude = find_claude()
-      require("claudecode").setup({
-        terminal_cmd = claude and vim.fs.normalize(claude),
-        git_repo_cwd = true,
-      })
-    end,
-    keys = {
-      { "<leader>a", desc = "+AI" },
-      -- Core Claude functionality
-      { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
-      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
-      { "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
-      { "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
 
-      -- Context management
-      { "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>", desc = "Add Current Buffer" },
-      { "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>", desc = "Add File from Tree" },
+local M = { name = "claude", label = "Claude" }
 
-      -- Diff management
-      { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept Diff" },
-      { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny Diff" },
+M.find_bin = find_claude
 
-      -- Additional commands
-      { "<leader>ax", "<cmd>ClaudeCodeClose<cr>", desc = "Close Claude" },
+--- Run a claudecode command (requiring the module first lazy-loads the plugin and its commands).
+---@param cmd string
+local function run(cmd)
+  return function()
+    require("claudecode")
+    vim.cmd(cmd)
+  end
+end
 
-      -- Visual mode selection
-      { "<leader>as", "<cmd>ClaudeCodeSend<cr>", desc = "Send Selection to Claude", mode = "v" },
-    },
-  },
-  {
-    "folke/which-key.nvim",
-    opts = function(_, opts)
-      opts.icons = opts.icons or {}
-      opts.icons.rules = opts.icons.rules or {}
-      vim.list_extend(opts.icons.rules, {
-        { pattern = "ai", icon = LazyVim.config.icons.kinds.Copilot, color = "orange" },
-      })
-    end,
-  },
-}
+---@return integer?
+function M.buf()
+  if not package.loaded["claudecode"] then
+    return nil
+  end
+  local ok, buf = pcall(function()
+    return require("claudecode.terminal").get_active_terminal_bufnr()
+  end)
+  return ok and buf or nil
+end
+
+---@return integer?
+function M.win()
+  return util.buf_win(M.buf())
+end
+
+function M.hide()
+  if M.win() then
+    require("claudecode.terminal").simple_toggle()
+  end
+end
+
+M.toggle = run("ClaudeCode")
+M.focus = run("ClaudeCodeFocus")
+M.close = run("ClaudeCodeClose")
+M.continue = run("ClaudeCode --continue")
+M.resume = run("ClaudeCode --resume")
+M.add_buffer = run("ClaudeCodeAdd %")
+M.send_selection = run("ClaudeCodeSend") -- reads the visual selection from the current mode
+M.add_tree = run("ClaudeCodeTreeAdd")
+M.diff_accept = run("ClaudeCodeDiffAccept")
+M.diff_deny = run("ClaudeCodeDiffDeny")
+
+---@param picker snacks.Picker
+function M.send_picker(picker)
+  local cc = require("claudecode")
+  for _, item in ipairs(util.picker_items(picker)) do
+    local from, to = item.pos and item.pos[1], item.end_pos and item.end_pos[1]
+    -- claudecode line numbers are 0-indexed
+    cc.send_at_mention(item.file, from and from - 1, to and to - 1, "picker")
+  end
+end
+
+return M
